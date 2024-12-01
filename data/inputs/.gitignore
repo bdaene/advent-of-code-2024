@@ -1,0 +1,8 @@
+# Your input should never be committed publicly. See https://adventofcode.com/about#faq_copying
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
+
+# And template input
+!day_00.txt

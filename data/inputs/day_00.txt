@@ -1,0 +1,2 @@
+This is a template input file
+It contains 2 lines
