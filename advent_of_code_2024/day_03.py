@@ -9,7 +9,7 @@ def get_data(input_file):
     return input_file.read()
 
 
-MUL_PATTERN = re.compile(r'mul\((\d+),(\d+)\)')
+MUL_PATTERN = re.compile(r"mul\((\d+),(\d+)\)")
 
 
 @timeit

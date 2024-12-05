@@ -17,9 +17,18 @@ def part_1(data):
         for col in range(n):
             if data[row][col] != xmas[0]:
                 continue
-            for dr, dc in [(0,1),(1,1),(1,0),(1,-1),(0,-1),(-1,-1),(-1,0),(-1,1)]:
+            for dr, dc in [
+                (0, 1),
+                (1, 1),
+                (1, 0),
+                (1, -1),
+                (0, -1),
+                (-1, -1),
+                (-1, 0),
+                (-1, 1),
+            ]:
                 for k, c in enumerate(xmas):
-                    row_, col_ = row+dr*k, col+dc*k
+                    row_, col_ = row + dr * k, col + dc * k
                     if not (0 <= row_ < m and 0 <= col_ < n and data[row_][col_] == c):
                         break
                 else:
@@ -30,13 +39,16 @@ def part_1(data):
 
 @timeit
 def part_2(data):
-    xmas = 'MSM'
+    xmas = "MSM"
     m, n = len(data), len(data[0])
     count = 0
-    for row in range(1, m-1):
-        for col in range(1, n-1):
-            if data[row][col] == 'A':
-                if data[row-1][col-1]+data[row+1][col+1] in xmas and data[row-1][col+1]+data[row+1][col-1] in xmas:
+    for row in range(1, m - 1):
+        for col in range(1, n - 1):
+            if data[row][col] == "A":
+                if (
+                    data[row - 1][col - 1] + data[row + 1][col + 1] in xmas
+                    and data[row - 1][col + 1] + data[row + 1][col - 1] in xmas
+                ):
                     count += 1
     return count
 

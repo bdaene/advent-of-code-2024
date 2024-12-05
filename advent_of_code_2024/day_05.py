@@ -10,10 +10,10 @@ def get_data(input_file):
     for line in input_file:
         if line.isspace():
             break
-        a, b = map(int, line.strip().split('|'))
+        a, b = map(int, line.strip().split("|"))
         after[a].add(b)
 
-    updates = [list(map(int, line.strip().split(','))) for line in input_file]
+    updates = [list(map(int, line.strip().split(","))) for line in input_file]
 
     return after, updates
 

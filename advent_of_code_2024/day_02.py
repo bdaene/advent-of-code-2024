@@ -16,6 +16,7 @@ def is_safe(report):
         return True
     return False
 
+
 @timeit
 def part_1(data):
     return sum(is_safe(report) for report in data)
@@ -25,7 +26,7 @@ def part_1(data):
 def part_2(data):
     count = 0
     for report in data:
-        if any(is_safe(report[:i] + report[i+1:]) for i in range(len(report))):
+        if any(is_safe(report[:i] + report[i + 1 :]) for i in range(len(report))):
             count += 1
 
     return count
