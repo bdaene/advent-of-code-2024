@@ -1,5 +1,5 @@
-from collections import deque, defaultdict
-from dataclasses import dataclass
+from collections import deque
+from heapq import heapify, heappop, heappush
 from importlib.resources import files
 
 from advent_of_code_2024.utils import timeit, setup_logging
@@ -10,93 +10,85 @@ def get_data(input_file):
     return list(map(int, input_file.readline().strip()))
 
 
+LENGTH_LIMIT = 10
+PREFIX_SUM, s = [0], 0
+for l in range(0, LENGTH_LIMIT):
+    s += l
+    PREFIX_SUM.append(s)
+
+
 @timeit
 def part_1(data):
-    if len(data) % 2 != 1:
-        data.pop()
+    blocks = deque(enumerate(data[::2]))
+    empty_spaces = data[1::2][::-1]
 
-    queue = deque(data)
-    l, r = 0, len(data) // 2
-    i, total = 0, 0
-    while queue:
-        a = queue.popleft()
-        total += sum(l * j for j in range(i, i + a))
-        print(str(l) * a, end="")
-        i += a
-        l += 1
+    data = []
+    start, total = 0, 0
+    while blocks:
+        block_id, block_length = blocks.popleft()
+        total += block_id * (start * block_length + PREFIX_SUM[block_length])
+        # data.append(str(block_id)[-1]*block_length)
+        start += block_length
 
-        if queue:
-            a = queue.popleft()
-            while a > 0:
-                b = queue.pop()
-                if b <= a:
-                    total += sum(r * j for j in range(i, i + b))
-                    print(str(r) * b, end="")
-                    i += b
-                    r -= 1
-                    queue.pop()
-                    a -= b
-                else:
-                    total += sum(r * j for j in range(i, i + a))
-                    print(str(r) * a, end="")
-                    i += a
-                    queue.append(b - a)
-                    a = 0
-    print()
+        space_length = empty_spaces.pop()
+        while blocks and space_length > 0:
+            block_id, block_length = blocks.pop()
+            if space_length >= block_length:
+                total += block_id * (start * block_length + PREFIX_SUM[block_length])
+                # data.append(str(block_id)[-1] * block_length)
+                start += block_length
+                space_length -= block_length
+            else:
+                total += block_id * (start * space_length + PREFIX_SUM[space_length])
+                # data.append(str(block_id)[-1] * space_length)
+                start += space_length
+                blocks.append((block_id, block_length - space_length))
+                space_length = 0
+
+    # print(''.join(data))
     return total
-
-
-@dataclass
-class Block:
-    id: str
-    length: int
 
 
 @timeit
 def part_2(data):
-    data = [
-        Block(str(i // 2), a) if i % 2 == 0 else Block(".", a)
-        for i, a in enumerate(data)
-    ]
-    r = len(data)
-    while r > 0:
-        r -= 1
-        if data[r].id == ".":
+    data_starts, data_lengths = [], []
+    empty_spaces = [[] for length in range(LENGTH_LIMIT)]
+
+    start = 0
+    for i, length in enumerate(data):
+        if i % 2:
+            empty_spaces[length].append(start)
+        else:
+            data_starts.append(start)
+            data_lengths.append(length)
+        start += length
+
+    for spaces in empty_spaces:
+        heapify(spaces)
+
+    for block_id in range(len(data_starts) - 1, -1, -1):
+        block_start, block_length = data_starts[block_id], data_lengths[block_id]
+        best = (block_start, None, None)
+        for space_length in range(block_length, LENGTH_LIMIT):
+            spaces = empty_spaces[space_length]
+            if spaces and spaces[0] < best[0]:
+                best = (spaces[0], space_length, spaces)
+        space_start, space_length, spaces = best
+        if spaces is None:
             continue
-        block = data[r]
-        l = next(
-            (
-                l
-                for l, b in enumerate(data[:r])
-                if b.id == "." and b.length >= block.length
-            ),
-            None,
-        )
-        if l is None:
-            continue
+        heappop(spaces)
+        data_starts[block_id] = space_start
+        heappush(empty_spaces[space_length - block_length], space_start + block_length)
 
-        b = data[l]
-        if b.length > block.length:
-            data.insert(l + 1, Block(".", b.length - block.length))
-            b.length = block.length
-            r += 1
-        b.id = block.id
-        block.id = "."
-        if data[r - 1].id == ".":
-            b = data.pop(r - 1)
-            block.length += b.length
-            r -= 1
-        if r + 1 < len(data) and data[r + 1].id == ".":
-            b = data.pop(r + 1)
-            block.length += b.length
+    # data = ['.'] * sum(data)
+    total = 0
+    for block_id, (block_start, block_length) in enumerate(
+        zip(data_starts, data_lengths)
+    ):
+        total += block_id * (block_start * block_length + PREFIX_SUM[block_length])
+        # data[block_start:block_start+block_length] = str(block_id)[-1] * block_length
 
-    i, total = 0, 0
-    for block in data:
-        print(block.id[-1] * block.length, end="")
-        if block.id != ".":
-            total += sum(j * int(block.id) for j in range(i, i + block.length))
-        i += block.length
-
+    # print(''.join(data))
     return total
 
 
