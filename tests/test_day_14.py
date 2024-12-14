@@ -32,6 +32,6 @@ def test_part_1():
 
 
 def test_part_2():
-    result = part_2(DATA, tiles=(11, 7), pattern="#" * 4)
+    result = part_2(DATA, tiles=(11, 7))
 
-    assert result == 6
+    assert result == 38

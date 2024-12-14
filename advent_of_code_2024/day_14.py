@@ -1,7 +1,6 @@
 import re
 from collections import Counter
 from importlib.resources import files
-from itertools import count
 
 from advent_of_code_2024.utils import timeit, setup_logging
 
@@ -26,23 +25,42 @@ def part_1(data, tiles=(101, 103), time=100):
         py = (py + vy * time) % ty
         qx = px - tx // 2
         qy = py - ty // 2
-        qx = 0 if qx == 0 else (-1 if qx < 0 else 1)
-        qy = 0 if qy == 0 else (-1 if qy < 0 else 1)
-        counter[(qx, qy)] += 1
+        if qx == 0 or qy == 0:
+            continue
+        counter[(qx > 0, qy > 0)] += 1
 
-    return counter[(-1, -1)] * counter[(-1, 1)] * counter[(1, -1)] * counter[(1, 1)]
+    total = 1
+    for v in counter.values():
+        total *= v
+    return total
 
 
 @timeit
-def part_2(data, tiles=(101, 103), pattern="#" * 16):
+def part_2(data, tiles=(101, 103)):
     tx, ty = tiles
-    for time in count(1):
+    vars_x, vars_y = [], []
+    for time in range(max(tiles)):
         positions = set(((px + vx * time) % tx, (py + vy * time) % ty) for (px, py), (vx, vy) in data)
-        s = "\n".join("".join("#" if (px, py) in positions else "." for px in range(tx)) for py in range(ty))
-        if pattern in s:
-            print(time)
-            print(s)
-            return time
+
+        n = len(positions)
+        sum_x2, sum_x = sum(px**2 for px, py in positions), sum(px for px, py in positions)
+        vars_x.append(sum_x2 / n - (sum_x / n) ** 2)
+        sum_y2, sum_y = sum(py**2 for px, py in positions), sum(py for px, py in positions)
+        vars_y.append(sum_y2 / n - (sum_y / n) ** 2)
+
+    time_x = min(range(len(vars_x)), key=vars_x.__getitem__)
+    time_y = min(range(len(vars_y)), key=vars_y.__getitem__)
+    # print(time_x, time_y)
+
+    # time = time_x + tx * u = time_y + ty * v
+    u = ((time_y - time_x) * pow(tx, -1, ty)) % ty
+    time = time_x + u * tx
+
+    # print(time)
+    # positions = set(((px + vx * time) % tx, (py + vy * time) % ty) for (px, py), (vx, vy) in data)
+    # print("\n".join("".join("#" if (px, py) in positions else "." for px in range(tx)) for py in range(ty)))
+
+    return time
 
 
 def main():
