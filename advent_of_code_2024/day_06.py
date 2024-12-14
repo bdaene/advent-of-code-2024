@@ -11,10 +11,7 @@ def get_data(input_file):
 @timeit
 def part_1(data):
     row, col = next(
-        (row, col)
-        for row, row_cells in enumerate(data)
-        for col, cell in enumerate(row_cells)
-        if cell == "^"
+        (row, col) for row, row_cells in enumerate(data) for col, cell in enumerate(row_cells) if cell == "^"
     )
 
     grid = [list(line) for line in data]
@@ -61,10 +58,7 @@ def check(grid, m, n, row, col, dr, dc, d):
 @timeit
 def part_2(data):
     start_row, start_col = next(
-        (row, col)
-        for row, row_cells in enumerate(data)
-        for col, cell in enumerate(row_cells)
-        if cell == "^"
+        (row, col) for row, row_cells in enumerate(data) for col, cell in enumerate(row_cells) if cell == "^"
     )
 
     m, n = len(data), len(data[0])

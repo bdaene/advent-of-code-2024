@@ -37,14 +37,8 @@ def part_1(data, tiles=(101, 103), time=100):
 def part_2(data, tiles=(101, 103), pattern="#" * 16):
     tx, ty = tiles
     for time in count(1):
-        positions = set(
-            ((px + vx * time) % tx, (py + vy * time) % ty)
-            for (px, py), (vx, vy) in data
-        )
-        s = "\n".join(
-            "".join("#" if (px, py) in positions else "." for px in range(tx))
-            for py in range(ty)
-        )
+        positions = set(((px + vx * time) % tx, (py + vy * time) % ty) for (px, py), (vx, vy) in data)
+        s = "\n".join("".join("#" if (px, py) in positions else "." for px in range(tx)) for py in range(ty))
         if pattern in s:
             print(time)
             print(s)

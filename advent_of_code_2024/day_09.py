@@ -10,11 +10,16 @@ def get_data(input_file):
     return list(map(int, input_file.readline().strip()))
 
 
+def compute_prefix_sum(length_limit):
+    prefix_sum, s = [0], 0
+    for length in range(0, LENGTH_LIMIT):
+        s += length
+        prefix_sum.append(s)
+    return prefix_sum
+
+
 LENGTH_LIMIT = 10
-PREFIX_SUM, s = [0], 0
-for l in range(0, LENGTH_LIMIT):
-    s += l
-    PREFIX_SUM.append(s)
+PREFIX_SUM = compute_prefix_sum(LENGTH_LIMIT)
 
 
 @timeit
@@ -82,9 +87,7 @@ def part_2(data):
 
     # data = ['.'] * sum(data)
     total = 0
-    for block_id, (block_start, block_length) in enumerate(
-        zip(data_starts, data_lengths)
-    ):
+    for block_id, (block_start, block_length) in enumerate(zip(data_starts, data_lengths)):
         total += block_id * (block_start * block_length + PREFIX_SUM[block_length])
         # data[block_start:block_start+block_length] = str(block_id)[-1] * block_length
 
