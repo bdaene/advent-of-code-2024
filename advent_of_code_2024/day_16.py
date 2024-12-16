@@ -1,3 +1,4 @@
+from heapq import heappush, heappop
 from importlib.resources import files
 
 from advent_of_code_2024.utils import timeit, setup_logging
@@ -22,21 +23,20 @@ def compute_costs(grid, start):
     costs = [[[INF] * 4 for cell in line] for line in grid]  # costs[row][col]dir]
     costs[start_row][start_col][0] = 0
 
-    to_visit = [(start, 0, 0)]
+    to_visit = [(0, start, 0), (2000, start, 2)]
     while to_visit:
-        to_visit_ = []
-        for position, direction, cost in to_visit:
-            (row, col), (dr, dc) = position, DIRECTIONS[direction]
-            for position_, direction_, cost_ in [
-                ((row + dr, col + dc), direction, cost + 1),
-                (position, (direction + 1) % 4, cost + 1000),
-                (position, (direction - 1) % 4, cost + 1000),
-            ]:
-                (row_, col_) = position_
-                if grid[row_][col_] != "#" and costs[row_][col_][direction_] > cost_:
-                    costs[row_][col_][direction_] = cost_
-                    to_visit_.append((position_, direction_, cost_))
-        to_visit = to_visit_
+        cost, position, direction = heappop(to_visit)
+        (row, col) = position
+        for direction_, cost_ in [
+            (direction, cost + 1),
+            ((direction + 1) % 4, cost + 1001),
+            ((direction - 1) % 4, cost + 1001),
+        ]:
+            dr_, dc_ = DIRECTIONS[direction_]
+            row_, col_ = row + dr_, col + dc_
+            if grid[row_][col_] != "#" and costs[row_][col_][direction_] > cost_:
+                costs[row_][col_][direction_] = cost_
+                heappush(to_visit, (cost_, (row_, col_), direction_))
 
     return costs
 
@@ -75,14 +75,14 @@ def part_2(data):
         best_paths_ = set()
         for position, direction, cost in best_paths:
             (row, col), (dr, dc) = position, DIRECTIONS[direction]
-            for position_, direction_, cost_ in [
-                ((row - dr, col - dc), direction, cost - 1),
-                (position, (direction - 1) % 4, cost - 1000),
-                (position, (direction + 1) % 4, cost - 1000),
+            row_, col_ = row - dr, col - dc
+            for direction_, cost_ in [
+                (direction, cost - 1),
+                ((direction - 1) % 4, cost - 1001),
+                ((direction + 1) % 4, cost - 1001),
             ]:
-                (row_, col_) = position_
                 if costs[row_][col_][direction_] == cost_:
-                    best_paths_.add((position_, direction_, cost_))
+                    best_paths_.add(((row_, col_), direction_, cost_))
         best_paths = best_paths_
 
     # print('\n'.join(''.join('O' if (row, col) in best_places else cell for col, cell in enumerate(line)) for row, line in enumerate(grid)))
