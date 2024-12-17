@@ -16,55 +16,71 @@ def get_data(input_file):
     return tuple(registers), program
 
 
-def get_combo(combo, registers):
-    if combo < 4:
-        return combo
-    combo -= 4
-    if combo < len(registers):
-        return registers[combo]
-    raise ValueError(f"Invalid combo {combo}")
+@timeit
+def parse_and_compile(program, debug=False):
+    def combo(value):
+        if value < 4:
+            return value
+        return "abc"[value - 4]
 
+    op_codes = [
+        ("adv", True, "a >>= {}"),
+        ("bxl", False, "b ^= {}"),
+        ("bst", True, "b = {} & 0b111"),
+        ("jnz", False, "if a: ip = {}"),
+        ("bxc", False, "b ^= c"),
+        ("out", True, "yield {} & 0b111"),
+        ("bdv", True, "b = a >> {}"),
+        ("cdv", True, "c = a >> {}"),
+    ]
 
-RA, RB, RC = range(3)
+    program_code = []
 
+    def tabulate(from_ip=0):
+        for line in range(from_ip // 2, len(program_code)):
+            program_code[line] = "    " + program_code[line]
 
-def run_program(registers, program):
-    ip = 0
-    while 0 <= ip < len(program):
-        opcode, operand = program[ip], program[ip + 1]
-        ip += 2
-        if opcode == 0:  # adv
-            registers[RA] >>= get_combo(operand, registers)
-        elif opcode == 1:  # bxl
-            registers[RB] ^= operand
-        elif opcode == 2:  # bst
-            registers[RB] = get_combo(operand, registers) % 8
-        elif opcode == 3:  # jnz
-            if registers[RA] != 0:
-                ip = operand
-        elif opcode == 4:  # bxc
-            registers[RB] ^= registers[RC]
-        elif opcode == 5:  # out
-            yield get_combo(operand, registers) % 8
-        elif opcode == 6:  # bdv
-            registers[RB] = registers[RA] >> get_combo(operand, registers)
-        elif opcode == 7:  # cdv
-            registers[RC] = registers[RA] >> get_combo(operand, registers)
+    for ip in range(0, len(program), 2):
+        op_code, operand = program[ip], program[ip + 1]
+        op_name, is_combo, instruction = op_codes[op_code]
+        if is_combo:
+            operand = combo(operand)
+        instruction = instruction.format(operand)
+        if op_name == "jnz":
+            program_code.append("if not a:")
+            program_code.append("   break")
+            tabulate(operand)
+            program_code.insert(operand // 2, "while True:")
         else:
-            raise ValueError(f"Invalid opcode: {ip} {opcode} {operand}")
+            program_code.append(instruction)
+
+    if debug:
+        program_code.insert(0, "if registers: a, b, c = registers")
+        program_code.append("registers[:] = [a, b, c]")
+        tabulate()
+        program_code.insert(0, "def program(a=0, b=0, c=0, *, registers=None):")
+
+    else:
+        tabulate()
+        program_code.insert(0, "def program(a=0, b=0, c=0):")
+
+    program_code = "\n".join(program_code)
+
+    print()
+    print(program_code)
+
+    local = {}
+    exec(program_code, None, local)
+    return local["program"]
 
 
 @timeit
-def part_1(data):
-    registers, program = data
-    registers = list(registers)
-    return ",".join(map(str, run_program(registers, program)))
+def part_1(registers, compiled_program):
+    return ",".join(map(str, compiled_program(*registers)))
 
 
 @timeit
-def part_2(data):
-    registers, program = data
-
+def part_2(program, compiled_program):
     def gen_a(i):
         if i < 0:
             yield 0
@@ -73,7 +89,7 @@ def part_2(data):
         for a in gen_a(i - 1):
             a <<= 3
             for bits in range(8):
-                if next(run_program([a + bits, 0, 0], program)) == program[~i]:
+                if next(compiled_program(a + bits)) == program[~i]:
                     yield a + bits
 
     return next(gen_a(len(program) - 1))
@@ -82,9 +98,10 @@ def part_2(data):
 def main():
     setup_logging()
     with (files("data.inputs") / "day_17.txt").open() as input_file:
-        data = get_data(input_file)
-    part_1(data)
-    part_2(data)
+        registers, program = get_data(input_file)
+    compiled_program = parse_and_compile(program)
+    part_1(registers, compiled_program)
+    part_2(program, compiled_program)
 
 
 if __name__ == "__main__":
