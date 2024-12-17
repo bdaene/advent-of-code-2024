@@ -64,14 +64,19 @@ def part_1(data):
 @timeit
 def part_2(data):
     registers, program = data
-    a = 0
-    for o in reversed(program):
-        a <<= 3
-        while next(run_program([a, 0, 0], program)) != o:
-            a += 1
-    while tuple(run_program([a, 0, 0], program)) != program:
-        a += 1
-    return a
+
+    def gen_a(i):
+        if i < 0:
+            yield 0
+            return
+
+        for a in gen_a(i - 1):
+            a <<= 3
+            for bits in range(8):
+                if next(run_program([a + bits, 0, 0], program)) == program[~i]:
+                    yield a + bits
+
+    return next(gen_a(len(program) - 1))
 
 
 def main():
