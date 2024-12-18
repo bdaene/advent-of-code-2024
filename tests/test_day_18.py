@@ -39,12 +39,12 @@ def test_get_data():
 
 
 def test_part_1():
-    result = part_1(DATA, size=7, nb_bytes=12)
+    result = part_1(DATA, size=6, nb_bytes=12)
 
     assert result == 22
 
 
 def test_part_2():
-    result = part_2(DATA, size=7, nb_bytes=12)
+    result = part_2(DATA, size=6)
 
     assert result == (6, 1)
