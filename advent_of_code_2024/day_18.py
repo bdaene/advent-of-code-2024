@@ -1,5 +1,5 @@
+from heapq import heappop, heappush
 from importlib.resources import files
-from typing import Any
 
 from advent_of_code_2024.utils import timeit, setup_logging
 
@@ -42,66 +42,44 @@ def part_1(data, size=70, nb_bytes=1024):
     return get_nb_steps(corrupted, size)
 
 
-class Obstacles:
-    def __init__(self):
-        self.obstacles: dict[Any, int] = {}
-        self.parents: list[int] = []
-        self.size: list[int] = []
-        self.borders: list[Any] = []
+def get_first_obstacle(obstacles, size):
+    inf = len(obstacles)
+    size += 1
 
-    def add_obstacle(self, obstacle, borders):
-        if obstacle in self.obstacles:
-            return
+    corrupted_time = [[inf for col in range(size)] for row in range(size)]
+    for i, (x, y) in enumerate(obstacles):
+        corrupted_time[y][x] = i
 
-        obstacle_id = len(self.obstacles)
-        self.obstacles[obstacle] = obstacle_id
-        self.parents.append(obstacle_id)
-        self.size.append(1)
-        self.borders.append(borders)
+    unreachable_time: list[list[int | None]]
+    unreachable_time = [[None for col in range(size)] for row in range(size)]
+    unreachable_time[0][0] = corrupted_time[0][0]
+    to_visit = [(-unreachable_time[0][0], 0, 0)]
+    while to_visit:
+        first_obstacle, row, col = heappop(to_visit)
+        first_obstacle = -first_obstacle
+        for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+            row_, col_ = row + dr, col + dc
+            if 0 <= row_ < size and 0 <= col_ < size and unreachable_time[row_][col_] is None:
+                first_obstacle_ = min(first_obstacle, corrupted_time[row_][col_])
+                unreachable_time[row_][col_] = first_obstacle_
+                heappush(to_visit, (-first_obstacle_, row_, col_))
 
-    def __contains__(self, obstacle) -> bool:
-        return obstacle in self.obstacles
 
-    def find(self, obstacle) -> int:
-        obstacle_id = self.obstacles[obstacle]
-        parent_id = obstacle_id
-        while self.parents[parent_id] != parent_id:
-            parent_id = self.parents[parent_id]
-        while obstacle_id != parent_id:
-            self.parents[obstacle_id], obstacle_id = parent_id, self.parents[obstacle_id]
-        return parent_id
+    # from matplotlib import pyplot
+    # fig, axes = pyplot.subplots(1, 2)
+    # axes[0].imshow(corrupted_time, cmap='hot_r')
+    # image = axes[1].imshow(unreachable_time, cmap='hot_r')
+    # axes[0].set_title("Time of byte fall")
+    # axes[1].set_title("Maximum reachable time")
+    # fig.colorbar(image, ax=axes, shrink=0.5)
+    # pyplot.show()
 
-    def union(self, obstacle_a, obstacle_b):
-        parent_a = self.find(obstacle_a)
-        parent_b = self.find(obstacle_b)
-
-        if parent_a == parent_b:
-            return
-
-        if self.size[parent_a] < self.size[parent_b]:
-            parent_a, parent_b = parent_b, parent_a
-
-        self.size[parent_a] += self.size[parent_b]
-        self.borders[parent_a] |= self.borders[parent_b]
-        self.parents[parent_b] = parent_a
+    return unreachable_time
 
 
 @timeit
 def part_2(data, size=70):
-    obstacles = Obstacles()
-
-    for x, y in data:
-        obstacle = (x, y)
-        borders = 0b0001 * (x == 0) + 0b0010 * (y == 0) + 0b0100 * (x == size) + 0b1000 * (y == size)
-        obstacles.add_obstacle(obstacle, borders)
-        for dx in (-1, 0, 1):
-            for dy in (-1, 0, 1):
-                obstacle_ = (x + dx, y + dy)
-                if obstacle_ in obstacles:
-                    obstacles.union(obstacle, obstacle_)
-        parent_borders = obstacles.borders[obstacles.find(obstacle)]
-        if parent_borders & 0b1001 and parent_borders & 0b0110:
-            return obstacle
+    return data[get_first_obstacle(data, size)[size][size]]
 
 
 def main():
