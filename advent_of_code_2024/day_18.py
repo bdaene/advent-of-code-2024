@@ -44,6 +44,7 @@ def part_1(data, size=70, nb_bytes=1024):
 
 def get_first_obstacle(obstacles, size):
     inf = len(obstacles)
+    target = size
     size += 1
 
     corrupted_time = [[inf for col in range(size)] for row in range(size)]
@@ -51,19 +52,22 @@ def get_first_obstacle(obstacles, size):
         corrupted_time[y][x] = i
 
     unreachable_time: list[list[int | None]]
-    unreachable_time = [[None for col in range(size)] for row in range(size)]
+    unreachable_time = [[inf + 1 for col in range(size)] for row in range(size)]
     unreachable_time[0][0] = corrupted_time[0][0]
     to_visit = [(-unreachable_time[0][0], 0, 0)]
     while to_visit:
         first_obstacle, row, col = heappop(to_visit)
         first_obstacle = -first_obstacle
+        assert all(row_ != row or col_ != col for first_obstacle_, row_, col_ in to_visit)
         for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
             row_, col_ = row + dr, col + dc
-            if 0 <= row_ < size and 0 <= col_ < size and unreachable_time[row_][col_] is None:
+            if 0 <= row_ < size and 0 <= col_ < size and unreachable_time[row_][col_] > inf:
                 first_obstacle_ = min(first_obstacle, corrupted_time[row_][col_])
                 unreachable_time[row_][col_] = first_obstacle_
                 heappush(to_visit, (-first_obstacle_, row_, col_))
-
+                if row_ == target and col_ == target:
+                    to_visit.clear()
+                    break
 
     # from matplotlib import pyplot
     # fig, axes = pyplot.subplots(1, 2)
