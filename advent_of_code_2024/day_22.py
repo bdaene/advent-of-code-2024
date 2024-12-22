@@ -1,4 +1,3 @@
-from collections import Counter, deque
 from importlib.resources import files
 
 from advent_of_code_2024.utils import timeit, setup_logging
@@ -12,14 +11,14 @@ def get_data(input_file):
 MASK = (1 << 24) - 1
 
 
-def get_next(number):
-    number ^= number << 6
-    number &= MASK
-    number ^= number >> 5
+def get_next(secret_number):
+    secret_number ^= secret_number << 6
+    secret_number &= MASK
+    secret_number ^= secret_number >> 5
     # number &= MASK
-    number ^= number << 11
-    number &= MASK
-    return number
+    secret_number ^= secret_number << 11
+    secret_number &= MASK
+    return secret_number
 
 
 @timeit
@@ -37,26 +36,30 @@ def part_1(data):
 
 @timeit
 def part_2(data):
-    total_bananas = Counter()
-    for initial_secret_number in data:
-        bananas = {}
+    changes_mask = (1 << 20) - 1
+    seen_changes = [0] * (1 << 20)
+    total_bananas = [0] * (1 << 20)
+    for i, initial_secret_number in enumerate(data, 1):
+        changes = 0
         secret_number = initial_secret_number
         price = secret_number % 10
-        changes = deque()
-        for _ in range(3):
-            secret_number = get_next(secret_number)
-            prev_price, price = price, secret_number % 10
-            changes.append(price - prev_price)
+        for _ in range(2000):
+            # Update secret number
+            secret_number ^= secret_number << 6
+            secret_number &= MASK
+            secret_number ^= secret_number >> 5
+            # number &= MASK  # Not needed
+            secret_number ^= secret_number << 11
+            secret_number &= MASK
 
-        for _ in range(2000 - 3):
-            secret_number = get_next(secret_number)
             prev_price, price = price, secret_number % 10
-            changes.append(price - prev_price)
-            bananas.setdefault(tuple(changes), price)
-            changes.popleft()
-        total_bananas += bananas
+            changes = (changes << 5) & changes_mask
+            changes += 16 + price - prev_price
+            if seen_changes[changes] < i:
+                seen_changes[changes] = i
+                total_bananas[changes] += price
 
-    return max(total_bananas.values())
+    return max(total_bananas[1 << 15 :])
 
 
 def main():
