@@ -36,9 +36,9 @@ def part_1(data):
 
 @timeit
 def part_2(data):
-    changes_mask = (1 << 20) - 1
-    seen_changes = [0] * (1 << 20)
-    total_bananas = [0] * (1 << 20)
+    changes_modulo = 20**4
+    seen_changes = [0] * changes_modulo
+    total_bananas = [0] * changes_modulo
     for i, initial_secret_number in enumerate(data, 1):
         changes = 0
         secret_number = initial_secret_number
@@ -53,13 +53,15 @@ def part_2(data):
             secret_number &= MASK
 
             prev_price, price = price, secret_number % 10
-            changes = (changes << 5) & changes_mask
-            changes += 16 + price - prev_price
-            if seen_changes[changes] < i:
+            changes = (changes * 20) % changes_modulo
+            changes += 10 + price - prev_price
+            if price >= prev_price and seen_changes[changes] < i:
                 seen_changes[changes] = i
                 total_bananas[changes] += price
 
-    return max(total_bananas[1 << 15 :])
+    # print(sum(c > 0 for c in total_bananas) / changes_modulo)
+    # print(nlargest(20, range(len(total_bananas)), key=total_bananas.__getitem__))
+    return max(total_bananas)
 
 
 def main():
