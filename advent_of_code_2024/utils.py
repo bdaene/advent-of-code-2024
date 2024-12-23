@@ -20,10 +20,12 @@ def timeit(func):
     def wrapper(*args, **kwargs):
         start = perf_counter()
         result = func(*args, **kwargs)
+        elapsed_time = perf_counter() - start
+        wrapper.elapsed_time = elapsed_time
         logger.info(
             "Execution of %s took %.3fms.",
             func.__name__,
-            (perf_counter() - start) * 1000,
+            elapsed_time * 1000,
         )
         logger.info("Result: %s", result)
         return result
