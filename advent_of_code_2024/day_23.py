@@ -17,15 +17,19 @@ def part_1(data):
         graph[b].add(a)
 
     count = 0
-    for a in sorted(graph):
+    for a in graph:
+        chief_a = a[0] == "t"
         for b in graph[a]:
             if b <= a:
                 continue
-            for c in graph[a] & graph[b]:
+            chief_b = chief_a or b[0] == "t"
+            for c in graph[b]:
                 if c <= b:
                     continue
-                # print(a, b, c)
-                count += any(node.startswith("t") for node in (a, b, c))
+                chief_c = chief_b or c[0] == "t"
+                if chief_c and a in graph[c]:
+                    # print(a, b, c)
+                    count += 1
 
     return count
 
@@ -37,26 +41,27 @@ def part_2(data):
         graph[a].add(b)
         graph[b].add(a)
 
-    def get_fully_connected(candidates, connected_nodes=()):
+    def gen_maximal_cliques(candidates, connected, rejected):
         if not candidates:
-            yield connected_nodes
+            if not rejected:
+                yield connected
             return
 
-        while candidates:
-            candidate = min(candidates)
-            for new_connected_nodes in get_fully_connected(
-                candidates & graph[candidate], connected_nodes + (candidate,)
-            ):
-                yield new_connected_nodes
-                candidates -= set(new_connected_nodes)
+        u = min(candidates)
+        for candidate in sorted(candidates - graph[u]):
+            yield from gen_maximal_cliques(
+                candidates & graph[candidate], connected + (candidate,), rejected & graph[candidate]
+            )
+            candidates.remove(candidate)
+            rejected.add(candidate)
 
     best = ()
-    for connected_nodes in get_fully_connected(set(graph)):
+    for connected_nodes in gen_maximal_cliques(set(graph), (), set()):
         if len(connected_nodes) > len(best):
             best = connected_nodes
             # print(connected_nodes)
 
-    return ",".join(best)
+    return ",".join(sorted(best))
 
 
 def main():
