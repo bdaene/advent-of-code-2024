@@ -21,4 +21,4 @@ def test_part_1():
 def test_part_2():
     result = part_2(DATA)
 
-    assert result == 3
+    assert result == 65601038650482
